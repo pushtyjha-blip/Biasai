@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FairText AI</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      padding: 40px;
+    }
+
+    textarea {
+      width: 60%;
+      height: 120px;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+    }
+
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      cursor: pointer;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 20px;
+      background: #1e293b;
+      border-radius: 10px;
+      width: 60%;
+      margin-left: auto;
+      margin-right: auto;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🧠 FairText AI</h1>
+<p>Analyze text for bias with simple, local heuristics.</p>
+
+<textarea id="inputText" placeholder="Enter text here..."></textarea><br>
+<button onclick="checkBias()">Check Bias</button>
+
+<div id="result">Result will appear here...</div>
+
+<script>
+function checkBias() {
+  const text = document.getElementById("inputText").value.trim();
+  const resultBox = document.getElementById("result");
+
+  if (!text) {
+    alert("Enter some text");
+    return;
+  }
+
+  resultBox.innerText = "Analyzing...";
+  const result = analyzeBias(text);
+  resultBox.innerText = `Bias: ${result.bias}\nReason: ${result.reason}\nSuggestion: ${result.suggestion}`;
+}
+
+function analyzeBias(text) {
+  const lower = text.toLowerCase();
+  const groups = [
+    "women", "men", "immigrants", "migrants", "muslims", "christians", "jews", "asians", "black people", "white people", "gay", "lesbian", "trans", "disabled", "old people", "young people", "students", "poor people"
+  ];
+
+  const generalizations = [
+    "always", "never", "all", "everyone", "nobody", "no one", "every", "everybody", "must", "should", "obviously", "clearly"
+  ];
+
+  const harmfulPhrases = [
+    "lazy", "violent", "dangerous", "stupid", "irresponsible", "criminal", "uncivilized", "inferior", "crazy", "disgusting", "dirty"
+  ];
+
+  const foundGroups = groups.filter(group => lower.includes(group));
+  const foundGeneralizations = generalizations.filter(word => new RegExp(`\\b${word}\\b`, "i").test(lower));
+  const foundHarmful = harmfulPhrases.filter(word => new RegExp(`\\b${word}\\b`, "i").test(lower));
+
+  if (foundGroups.length === 0 && foundGeneralizations.length === 0 && foundHarmful.length === 0) {
+    return {
+      bias: "No",
+      reason: "No obvious group-based bias or broad generalization was detected.",
+      suggestion: "The sentence appears neutral, but always choose respectful and inclusive language."
+    };
+  }
+
+  const reasons = [];
+  if (foundGroups.length) {
+    reasons.push(`References a protected or demographic group: ${foundGroups.join(", ")}`);
+  }
+  if (foundGeneralizations.length) {
+    reasons.push(`Uses broad generalizations or absolutes: ${foundGeneralizations.join(", ")}`);
+  }
+  if (foundHarmful.length) {
+    reasons.push(`Contains negative or stereotype-related words: ${foundHarmful.join(", ")}`);
+  }
+
+  const neutralSuggestion = text
+    .replace(/\b(always|never|all|everyone|everybody|no one|nobody|every)\b/gi, "many")
+    .replace(/\b(must|should)\b/gi, "might")
+    .replace(/\b(women|men|immigrants|migrants|muslims|christians|jews|asians|black people|white people|gay|lesbian|trans|disabled|old people|young people|students|poor people)\b/gi, "people")
+    .replace(/\b(lazy|violent|dangerous|stupid|irresponsible|criminal|uncivilized|inferior|crazy|disgusting|dirty)\b/gi, "unfair")
+    .trim();
+
+  return {
+    bias: "Yes",
+    reason: reasons.join("; "),
+    suggestion: neutralSuggestion === text ? "Try avoiding group generalizations and replace negative terms with neutral alternatives." : neutralSuggestion
+  };
+}
+</script>
+
+</body>
+</html>
